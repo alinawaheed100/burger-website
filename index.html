@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlavorCraft | Ultra-Deluxe Culinary Hub</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Vanilla Tilt JS for 3D card tilt effects -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            amber: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+            },
+            coral: {
+              500: '#ff6b4a',
+              600: '#f05230',
+            },
+            emerald: {
+              400: '#34d399',
+              500: '#10b981',
+            },
+            dark: {
+              950: '#070a0f',
+              900: '#0d1117',
+              800: '#161b22',
+              700: '#21262d',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          animation: {
+            'float': 'float 5s ease-in-out infinite',
+            'spin-slow': 'spin 20s linear infinite',
+            'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateY(-14px) rotate(3deg)' },
+            },
+            pulseGlow: {
+              '0%, 100%': { opacity: 0.6, transform: 'scale(1)' },
+              '50%': { opacity: 1, transform: 'scale(1.05)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #070a0f;
+    }
+
+    /* Glassmorphism Styling */
+    .glass-card {
+      background: rgba(22, 27, 34, 0.75);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-card-hover {
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .glass-card-hover:hover {
+      border-color: rgba(245, 158, 11, 0.5);
+      box-shadow: 0 20px 40px -15px rgba(245, 158, 11, 0.25);
+    }
+
+    .glass-nav {
+      background: rgba(7, 10, 15, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* Glossy Shine Overlay on Hover */
+    .shine-effect {
+      position: relative;
+      overflow: hidden;
+    }
+    .shine-effect::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -60%;
+      width: 20%;
+      height: 200%;
+      background: rgba(255, 255, 255, 0.25);
+      transform: rotate(30deg);
+      transition: all 0.75s ease;
+      pointer-events: none;
+    }
+    .shine-effect:hover::after {
+      left: 130%;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #070a0f;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(to bottom, #f59e0b, #ff6b4a);
+      border-radius: 9999px;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Flavor Wheel Canvas Rotation */
+    #wheelCanvas {
+      transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99);
+    }
+  </style>
+</head>
+
+<body class="bg-dark-950 text-slate-100 transition-colors duration-300 min-h-screen relative overflow-x-hidden selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- Interactive Floating Food Particle Canvas Background -->
+  <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+  <!-- Ambient Color Glows -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute top-1/2 -right-32 w-96 h-96 bg-coral-500/15 rounded-full blur-3xl animate-float" style="animation-delay: -2s;"></div>
+    <div class="absolute bottom-10 left-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-float" style="animation-delay: -3.5s;"></div>
+  </div>
+
+  <!-- Sound Audio Feedback Indicator & Toast Container -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="glass-card bg-amber-500 text-slate-950 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-amber-400">
+      <i data-lucide="sparkles" class="w-5 h-5 text-slate-950"></i>
+      <span id="toastMsg" class="font-extrabold text-xs sm:text-sm">Action Completed!</span>
+    </div>
+  </div>
+
+  <!-- Sticky Navbar Header -->
+  <header class="fixed top-0 left-0 right-0 z-40 transition-all duration-300 glass-nav border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <a href="#hero" onmouseenter="playChime(600)" class="flex items-center gap-2 group shrink-0">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-coral-500 to-emerald-400 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/25 group-hover:scale-110 transition-transform">
+          <i data-lucide="utensils" class="w-6 h-6 stroke-[2.5]"></i>
+        </div>
+        <span class="font-black text-2xl tracking-tight bg-gradient-to-r from-white via-amber-400 to-coral-500 bg-clip-text text-transparent">
+          Flavor<span class="text-amber-500">Craft</span>
+        </span>
+      </a>
+
+      <!-- Live Search Bar (Desktop) -->
+      <div class="hidden md:flex items-center flex-1 max-w-xs relative mx-4">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 text-slate-400"></i>
+        <input type="text" id="searchInput" placeholder="Search burgers, ramen, pizza..." onkeyup="filterBySearch()" class="w-full pl-10 pr-4 py-2 rounded-full glass-card text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all bg-dark-800/60 border border-slate-700/60 text-white placeholder-slate-400">
+      </div>
+
+      <!-- Desktop Nav Shortcuts -->
+      <nav class="hidden lg:flex items-center gap-6 font-bold text-xs tracking-wide">
+        <a href="#menu" onmouseenter="playChime(500)" class="hover:text-amber-400 transition-colors">MENU</a>
+        <a href="#builder" onmouseenter="playChime(520)" class="hover:text-amber-400 transition-colors flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-coral-500 animate-ping"></span> DIY BOWL
+        </a>
+        <a href="#wheel" onmouseenter="playChime(540)" class="hover:text-amber-400 transition-colors">FLAVOR WHEEL</a>
+        <a href="#reservation" onmouseenter="playChime(560)" class="hover:text-amber-400 transition-colors">BOOK TABLE</a>
+      </nav>
+
+      <!-- Header Controls -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Sound FX Toggle Button -->
+        <button id="soundToggleBtn" onclick="toggleAudio()" onmouseenter="playChime(700)" title="Toggle Sound FX" aria-label="Toggle Sound FX" class="p-2.5 rounded-2xl glass-card text-slate-300 hover:text-amber-400 transition-all hover:scale-105">
+          <i data-lucide="volume-2" id="soundIcon" class="w-5 h-5 text-emerald-400"></i>
+        </button>
+
+        <!-- Live Tracker Button -->
+        <button onclick="toggleTrackerModal(true)" onmouseenter="playChime(650)" title="Order Tracker" aria-label="Order Tracker" class="p-2.5 rounded-2xl glass-card text-slate-300 hover:text-amber-400 transition-all hover:scale-105 relative">
+          <i data-lucide="truck" class="w-5 h-5 text-amber-400"></i>
+          <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
+        </button>
+
+        <!-- Cart Button -->
+        <button id="cartBtn" onclick="toggleCartDrawer(true)" onmouseenter="playChime(800)" aria-label="Shopping Cart" class="relative px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-coral-500 text-slate-950 font-black shadow-lg shadow-amber-500/20 hover:scale-105 transition-all flex items-center gap-2">
+          <i data-lucide="shopping-bag" class="w-5 h-5 stroke-[2.5]"></i>
+          <span id="cartBadge" class="w-5 h-5 bg-slate-950 text-amber-400 rounded-full text-[10px] font-black flex items-center justify-center">0</span>
+        </button>
+
+        <!-- Mobile Menu Toggle -->
+        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="Toggle Mobile Menu" class="lg:hidden p-2.5 rounded-2xl glass-card text-slate-200">
+          <i data-lucide="menu" id="menuIcon" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobileMenu" class="hidden lg:hidden border-b border-slate-800 bg-dark-950/95 backdrop-blur-2xl px-6 py-5 space-y-4">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
+        <input type="text" id="mobileSearchInput" placeholder="Search dishes..." onkeyup="filterByMobileSearch()" class="w-full pl-10 pr-4 py-2 rounded-xl glass-card text-xs focus:ring-2 focus:ring-amber-500 text-white">
+      </div>
+      <nav class="flex flex-col gap-3 font-bold text-xs uppercase tracking-wider">
+        <a href="#menu" onclick="toggleMobileMenu()" class="py-2 hover:text-amber-400 flex items-center justify-between">
+          <span>Explore Menu</span> <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </a>
+        <a href="#builder" onclick="toggleMobileMenu()" class="py-2 hover:text-amber-400 flex items-center justify-between">
+          <span>DIY Custom Bowl</span> <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+        </a>
+        <a href="#wheel" onclick="toggleMobileMenu()" class="py-2 hover:text-amber-400 flex items-center justify-between">
+          <span>Spin Flavor Wheel</span> <i data-lucide="disc" class="w-4 h-4 text-coral-500"></i>
+        </a>
+        <a href="#reservation" onclick="toggleMobileMenu()" class="py-2 hover:text-amber-400 flex items-center justify-between">
+          <span>Book Table</span> <i data-lucide="calendar" class="w-4 h-4 text-emerald-400"></i>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="hero" class="relative pt-28 sm:pt-36 pb-20 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        
+        <!-- Hero Content -->
+        <div class="lg:col-span-6 space-y-6 text-center lg:text-left z-10">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-xs font-black text-amber-400 border border-amber-500/30 shadow-lg shadow-amber-500/10">
+            <i data-lucide="flame" class="w-4 h-4 text-coral-500 animate-bounce"></i>
+            <span>ULTRA-DELUXE CULINARY EXPERIENCE</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-none">
+            Culinary <br>
+            <span class="bg-gradient-to-r from-amber-400 via-coral-500 to-emerald-400 bg-clip-text text-transparent">Masterpieces</span>
+          </h1>
+
+          <p class="text-slate-400 text-sm sm:text-base max-w-md mx-auto lg:mx-0 font-medium leading-relaxed">
+            Savor 4K-standard gourmet creations, hand-crafted woodfired pizzas & artisanal cocktails delivered steaming hot.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+            <a href="#menu" onmouseenter="playChime(600)" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-coral-500 to-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all flex items-center justify-center gap-2 shine-effect">
+              <span>EXPLORE MENU</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 stroke-[3]"></i>
+            </a>
+            <a href="#builder" onmouseenter="playChime(620)" class="w-full sm:w-auto px-8 py-4 rounded-2xl glass-card font-black text-xs uppercase tracking-wider text-slate-200 hover:border-amber-500/50 transition-all flex items-center justify-center gap-2">
+              <i data-lucide="sliders" class="w-4 h-4 text-amber-400"></i>
+              <span>DIY BOWL</span>
+            </a>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="grid grid-cols-3 gap-3 pt-6 border-t border-slate-800">
+            <div>
+              <p class="text-xl sm:text-2xl font-black text-amber-400">25 Min</p>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Fast Express</p>
+            </div>
+            <div>
+              <p class="text-xl sm:text-2xl font-black text-coral-500">4.9 ★</p>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">18k+ Reviews</p>
+            </div>
+            <div>
+              <p class="text-xl sm:text-2xl font-black text-emerald-400">100%</p>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Organic Fresh</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero 3D Card Interactive Display -->
+        <div class="lg:col-span-6 relative flex justify-center">
+          <div class="relative w-full max-w-md aspect-square">
+            
+            <div class="absolute inset-0 bg-gradient-to-tr from-amber-500/20 via-coral-500/20 to-emerald-500/20 rounded-full blur-3xl animate-pulse-glow"></div>
+
+            <div id="heroCard" data-tilt data-tilt-max="12" data-tilt-speed="400" class="relative w-full h-full rounded-3xl overflow-hidden glass-card p-4 border border-slate-700/50 shadow-2xl shine-effect cursor-pointer">
+              <img id="heroImage" src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1000&q=80" alt="Gourmet Burger" class="w-full h-full object-cover rounded-2xl transition-all duration-700">
+              
+              <div class="absolute bottom-6 left-6 right-6 p-4 rounded-2xl glass-card bg-dark-950/85 text-white backdrop-blur-xl flex items-center justify-between border border-white/10">
+                <div>
+                  <span class="text-[10px] font-black uppercase text-amber-400 tracking-wider">FEATURED DISH</span>
+                  <h3 id="heroTitle" class="font-extrabold text-base">Signature Truffle Wagyu Burger</h3>
+                  <p id="heroPrice" class="text-xs font-bold text-slate-400">$18.99 • Grade A5 Wagyu</p>
+                </div>
+                <button onclick="addHeroDishToCart()" onmouseenter="playChime(700)" class="p-3 rounded-xl bg-amber-500 text-slate-950 font-black hover:scale-110 transition-transform shadow-lg shadow-amber-500/30">
+                  <i data-lucide="plus" class="w-5 h-5 stroke-[3]"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Live Category Filter & Food Menu Grid -->
+  <section id="menu" class="py-20 relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-xl mx-auto mb-10 space-y-2">
+        <span class="text-xs font-black uppercase tracking-widest text-amber-400">ARTISANAL SELECTION</span>
+        <h2 class="text-3xl sm:text-5xl font-black tracking-tight">Explore The Menu</h2>
+      </div>
+
+      <!-- Filter Category Buttons -->
+      <div class="flex items-center justify-start md:justify-center gap-3 overflow-x-auto pb-4 mb-12 hide-scrollbar" id="categoryFilters">
+        <button onclick="filterCategory('all')" onmouseenter="playChime(400)" class="cat-filter active px-5 py-2.5 rounded-2xl text-xs font-black bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 transition-all whitespace-nowrap">
+          ALL DISHES 🍽️
+        </button>
+        <button onclick="filterCategory('burgers')" onmouseenter="playChime(420)" class="cat-filter px-5 py-2.5 rounded-2xl text-xs font-black glass-card text-slate-300 hover:border-amber-500/50 transition-all whitespace-nowrap">
+          GOURMET BURGERS 🍔
+        </button>
+        <button onclick="filterCategory('pizza')" onmouseenter="playChime(440)" class="cat-filter px-5 py-2.5 rounded-2xl text-xs font-black glass-card text-slate-300 hover:border-amber-500/50 transition-all whitespace-nowrap">
+          WOODFIRED PIZZA 🍕
+        </button>
+        <button onclick="filterCategory('sushi')" onmouseenter="playChime(460)" class="cat-filter px-5 py-2.5 rounded-2xl text-xs font-black glass-card text-slate-300 hover:border-amber-500/50 transition-all whitespace-nowrap">
+          CHEF'S SUSHI 🍣
+        </button>
+        <button onclick="filterCategory('desserts')" onmouseenter="playChime(480)" class="cat-filter px-5 py-2.5 rounded-2xl text-xs font-black glass-card text-slate-300 hover:border-amber-500/50 transition-all whitespace-nowrap">
+          ARTISANAL DESSERTS 🍰
+        </button>
+        <button onclick="filterCategory('drinks')" onmouseenter="playChime(500)" class="cat-filter px-5 py-2.5 rounded-2xl text-xs font-black glass-card text-slate-300 hover:border-amber-500/50 transition-all whitespace-nowrap">
+          DRINKS & MOCKTAILS 🍹
+        </button>
+      </div>
+
+      <!-- Food Menu Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="foodGrid">
+        <!-- Rendered dynamically -->
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Interactive "Build Your Own Custom Bowl / Pizza" Widget -->
+  <section id="builder" class="py-20 relative z-10 bg-dark-900/60 border-y border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-xl mx-auto mb-12 space-y-2">
+        <span class="text-xs font-black uppercase tracking-widest text-coral-500">DIY BOWL CREATOR</span>
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Build Your Custom Creation</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center glass-card p-6 sm:p-10 rounded-3xl border border-slate-800 shadow-2xl">
+        
+        <!-- Live Bowl Visualizer -->
+        <div class="lg:col-span-6 flex flex-col items-center justify-center text-center space-y-6">
+          <div class="relative w-64 h-64 sm:w-72 sm:h-72 rounded-full overflow-hidden border-4 border-amber-500/30 p-2 shadow-2xl shine-effect">
+            <img id="builderImg" src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80" alt="Custom Bowl Base" class="w-full h-full object-cover rounded-full transition-all duration-500">
+          </div>
+          <div class="space-y-1">
+            <span id="builderBaseTag" class="text-[10px] font-black uppercase tracking-widest text-amber-400">ORGANIC GRAIN BOWL</span>
+            <h3 id="builderName" class="font-black text-2xl">Custom Culinary Bowl</h3>
+            <p id="builderPrice" class="text-3xl font-black text-amber-400">$14.00</p>
+          </div>
+        </div>
+
+        <!-- Customizer Choices -->
+        <div class="lg:col-span-6 space-y-6">
+          
+          <!-- Base Choice -->
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">1. Select Base Dish</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="setBuilderBase('bowl')" onmouseenter="playChime(400)" class="builder-base-btn active p-3 rounded-xl glass-card text-xs font-black border-amber-500 text-amber-400">
+                Grain Bowl ($14)
+              </button>
+              <button onclick="setBuilderBase('pizza')" onmouseenter="playChime(420)" class="builder-base-btn p-3 rounded-xl glass-card text-xs font-black hover:border-amber-500">
+                Artisan Pizza ($16)
+              </button>
+              <button onclick="setBuilderBase('ramen')" onmouseenter="playChime(440)" class="builder-base-btn p-3 rounded-xl glass-card text-xs font-black hover:border-amber-500">
+                Ramen Bowl ($15)
+              </button>
+            </div>
+          </div>
+
+          <!-- Toppings Checkboxes -->
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">2. Premium Add-ons</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="flex items-center justify-between p-3 rounded-xl glass-card cursor-pointer hover:border-amber-500/50 transition-all">
+                <span class="flex items-center gap-2 text-xs font-bold">
+                  <input type="checkbox" onchange="updateBuilderPrice()" value="3.50" data-name="A5 Wagyu Strip" class="builder-topping accent-amber-500">
+                  Wagyu Strips
+                </span>
+                <span class="text-xs font-extrabold text-amber-400">+$3.50</span>
+              </label>
+
+              <label class="flex items-center justify-between p-3 rounded-xl glass-card cursor-pointer hover:border-amber-500/50 transition-all">
+                <span class="flex items-center gap-2 text-xs font-bold">
+                  <input type="checkbox" onchange="updateBuilderPrice()" value="2.50" data-name="Smoked Burrata" class="builder-topping accent-amber-500">
+                  Smoked Burrata
+                </span>
+                <span class="text-xs font-extrabold text-amber-400">+$2.50</span>
+              </label>
+
+              <label class="flex items-center justify-between p-3 rounded-xl glass-card cursor-pointer hover:border-amber-500/50 transition-all">
+                <span class="flex items-center gap-2 text-xs font-bold">
+                  <input type="checkbox" onchange="updateBuilderPrice()" value="1.50" data-name="Fresh Hass Avocado" class="builder-topping accent-amber-500">
+                  Hass Avocado
+                </span>
+                <span class="text-xs font-extrabold text-amber-400">+$1.50</span>
+              </label>
+
+              <label class="flex items-center justify-between p-3 rounded-xl glass-card cursor-pointer hover:border-amber-500/50 transition-all">
+                <span class="flex items-center gap-2 text-xs font-bold">
+                  <input type="checkbox" onchange="updateBuilderPrice()" value="2.00" data-name="Black Truffle Glaze" class="builder-topping accent-amber-500">
+                  Truffle Glaze
+                </span>
+                <span class="text-xs font-extrabold text-amber-400">+$2.00</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Add Custom Dish CTA -->
+          <button onclick="addCustomBuilderToCart()" onmouseenter="playChime(700)" class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-coral-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl shadow-amber-500/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shine-effect">
+            <i data-lucide="shopping-bag" class="w-4 h-4 stroke-[3]"></i>
+            <span>ADD CUSTOM CREATION TO CART</span>
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- "Spin The Flavor Wheel" / Surprise Me Picker Section -->
+  <section id="wheel" class="py-20 relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-xl mx-auto mb-10 space-y-2">
+        <span class="text-xs font-black uppercase tracking-widest text-amber-400">UNDECIDED FOODIE?</span>
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Spin The Flavor Wheel</h2>
+      </div>
+
+      <div class="glass-card max-w-2xl mx-auto rounded-3xl p-8 border border-slate-800 text-center space-y-6 flex flex-col items-center">
+        
+        <!-- Wheel Canvas Container -->
+        <div class="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
+          <!-- Wheel Pointer Indicator -->
+          <div class="absolute -top-3 z-30 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-amber-500"></div>
+          
+          <canvas id="wheelCanvas" width="300" height="300" class="w-full h-full rounded-full shadow-2xl border-4 border-slate-800"></canvas>
+        </div>
+
+        <div id="wheelResult" class="text-sm font-black text-amber-400 h-6">Spin to unlock your random surprise dish!</div>
+
+        <button id="spinBtn" onclick="spinWheel()" onmouseenter="playChime(650)" class="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-coral-500 to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl hover:scale-105 transition-all flex items-center gap-2">
+          <i data-lucide="disc" class="w-4 h-4 stroke-[3]"></i>
+          <span>SPIN FLAVOR WHEEL</span>
+        </button>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Table Reservation Modal & Section -->
+  <section id="reservation" class="py-20 relative z-10 bg-dark-900/60 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        
+        <div class="lg:col-span-5 space-y-4">
+          <span class="text-xs font-black uppercase tracking-widest text-emerald-400">VIP TABLE BOOKING</span>
+          <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Reserve Your Dining Experience</h2>
+          <p class="text-xs text-slate-400 font-medium leading-relaxed">
+            Guarantee your spot at FlavorCraft. Select date, guests, and enjoy complimentary chef starter dishes.
+          </p>
+        </div>
+
+        <div class="lg:col-span-7 glass-card p-6 sm:p-8 rounded-3xl border border-slate-800">
+          <form onsubmit="handleReservationSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Full Name</label>
+              <input type="text" required placeholder="Alexander Vance" class="w-full px-4 py-3 rounded-xl glass-card text-xs text-white focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Phone Number</label>
+              <input type="tel" required placeholder="+1 (555) 019-2834" class="w-full px-4 py-3 rounded-xl glass-card text-xs text-white focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Date</label>
+              <input type="date" required class="w-full px-4 py-3 rounded-xl glass-card text-xs text-white focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Guests</label>
+              <select class="w-full px-4 py-3 rounded-xl glass-card text-xs text-white focus:ring-2 focus:ring-amber-500 outline-none bg-dark-800">
+                <option>2 Guests (Romantic Table)</option>
+                <option>4 Guests (Family Dining)</option>
+                <option>6+ Guests (VIP Lounge)</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <button type="submit" onmouseenter="playChime(700)" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-2">
+                <i data-lucide="calendar" class="w-4 h-4 stroke-[3]"></i>
+                <span>CONFIRM VIP RESERVATION</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Interactive Delivery Tracker Modal -->
+  <div id="trackerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div class="glass-card w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 relative border border-slate-800 bg-dark-900 shadow-2xl">
+      
+      <button onclick="toggleTrackerModal(false)" aria-label="Close Modal" class="absolute top-5 right-5 p-2 rounded-xl hover:bg-slate-800">
+        <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+      </button>
+
+      <div class="text-center space-y-1">
+        <span class="text-[10px] font-black uppercase tracking-widest text-amber-400">EXPRESS DISPATCH</span>
+        <h3 class="font-black text-2xl">Live Delivery Status</h3>
+        <p class="text-xs text-slate-400">Order #FC-8921 • Estimated Arrival: 18 Mins</p>
+      </div>
+
+      <!-- Animated Progress Tracker -->
+      <div class="space-y-6 py-4">
+        <div class="relative w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div id="trackerProgress" class="h-full bg-gradient-to-r from-amber-500 via-coral-500 to-emerald-400 w-3/4 transition-all duration-1000"></div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-black uppercase tracking-wider">
+          <div class="text-amber-400">Received</div>
+          <div class="text-amber-400">Cooking</div>
+          <div class="text-emerald-400 animate-pulse">On Way</div>
+          <div class="text-slate-500">Delivered</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Cart Slide-Out Drawer -->
+  <div id="cartDrawer" class="fixed inset-0 z-50 pointer-events-none transition-all duration-300">
+    <div id="cartBackdrop" onclick="toggleCartDrawer(false)" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm opacity-0 transition-opacity duration-300"></div>
+
+    <div id="cartPanel" class="absolute top-0 right-0 bottom-0 w-full max-w-md bg-dark-900 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col pointer-events-auto border-l border-slate-800">
+      
+      <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="shopping-bag" class="w-5 h-5 text-amber-400"></i>
+          <h3 class="font-black text-lg">Your Culinary Bag</h3>
+        </div>
+        <button onclick="toggleCartDrawer(false)" aria-label="Close Cart" class="p-2 rounded-xl hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Free Shipping Progress -->
+      <div class="px-6 py-3 bg-dark-950 border-b border-slate-800">
+        <div class="flex justify-between text-[10px] font-black uppercase tracking-wider mb-1">
+          <span id="shippingText" class="text-amber-400">Add $10 for FREE Express Shipping</span>
+          <span id="shippingPct">60%</span>
+        </div>
+        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div id="shippingBar" class="h-full bg-amber-500 w-3/5 transition-all"></div>
+        </div>
+      </div>
+
+      <!-- Items List -->
+      <div id="cartItemsList" class="flex-1 overflow-y-auto p-6 space-y-4">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Footer Summary & Promo -->
+      <div class="p-6 border-t border-slate-800 space-y-4 bg-dark-950/60">
+        
+        <!-- Promo Code Input -->
+        <div class="flex gap-2">
+          <input type="text" id="promoInput" placeholder="Promo (FLAVOR20)" class="flex-1 px-3 py-2 rounded-xl glass-card text-xs uppercase text-white focus:ring-1 focus:ring-amber-500 outline-none">
+          <button onclick="applyPromo()" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-black text-xs hover:scale-105 transition-all">APPLY</button>
+        </div>
+
+        <div class="space-y-1.5 text-xs font-bold text-slate-400">
+          <div class="flex justify-between">
+            <span>Subtotal</span>
+            <span id="cartSubtotal" class="text-white">$0.00</span>
+          </div>
+          <div id="discountRow" class="flex justify-between text-emerald-400 hidden">
+            <span>Promo Discount (20%)</span>
+            <span id="cartDiscount">-$0.00</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Express Delivery</span>
+            <span id="cartDelivery">$2.99</span>
+          </div>
+          <div class="flex justify-between text-sm font-black text-white pt-2 border-t border-slate-800">
+            <span>Total</span>
+            <span id="cartTotal" class="text-amber-400">$2.99</span>
+          </div>
+        </div>
+
+        <button onclick="triggerCheckout()" onmouseenter="playChime(750)" class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-coral-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl shadow-amber-500/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shine-effect">
+          <span>INSTANT CHECKOUT</span>
+          <i data-lucide="arrow-right" class="w-4 h-4 stroke-[3]"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-dark-950 text-white pt-16 pb-12 border-t border-slate-800 relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+      <span class="font-black text-2xl tracking-tight bg-gradient-to-r from-amber-400 via-coral-500 to-emerald-400 bg-clip-text text-transparent">
+        FlavorCraft
+      </span>
+      <p class="text-xs text-slate-500 max-w-sm mx-auto">Crafted with high passion, organic ingredients and ultra-fast express delivery.</p>
+      <div class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">© 2026 FlavorCraft Inc. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Audio Chimes via Web Audio API
+    let audioEnabled = true;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playChime(freq = 500) {
+      if (!audioEnabled) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } catch (e) {}
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      const icon = document.getElementById('soundIcon');
+      if (audioEnabled) {
+        icon.className = "w-5 h-5 text-emerald-400";
+        showToast("Sound Chimes Activated");
+      } else {
+        icon.className = "w-5 h-5 text-slate-500";
+        showToast("Sound Muted");
+      }
+    }
+
+    // Food Items Data
+    const dishes = [
+      {
+        id: 1,
+        title: "Signature Wagyu Truffle Burger",
+        category: "burgers",
+        price: 18.99,
+        rating: 4.9,
+        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
+        badge: "Wagyu A5"
+      },
+      {
+        id: 2,
+        title: "Smoked Burrata Pepperoni Pizza",
+        category: "pizza",
+        price: 21.50,
+        rating: 4.8,
+        image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80",
+        badge: "Woodfired"
+      },
+      {
+        id: 3,
+        title: "Dragon Roll Salmon Sushi",
+        category: "sushi",
+        price: 24.00,
+        rating: 5.0,
+        image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=800&q=80",
+        badge: "Chef Special"
+      },
+      {
+        id: 4,
+        title: "Velvet Chocolate Lava Cake",
+        category: "desserts",
+        price: 11.50,
+        rating: 4.9,
+        image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=800&q=80",
+        badge: "Belgian Cacao"
+      },
+      {
+        id: 5,
+        title: "Handcrafted Dragonfruit Mojito",
+        category: "drinks",
+        price: 8.99,
+        rating: 4.7,
+        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80",
+        badge: "Cold Craft"
+      },
+      {
+        id: 6,
+        title: "Spicy Seafood Tonkotsu Ramen",
+        category: "sushi",
+        price: 17.50,
+        rating: 4.9,
+        image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80",
+        badge: "12hr Broth"
+      }
+    ];
+
+    let cart = [];
+    let discountRate = 0;
+
+    // Builder State
+    let builderPrice = 14.00;
+    let builderName = "Custom Grain Bowl";
+    let builderImg = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
+
+    // Initialize App
+    window.onload = function() {
+      lucide.createIcons();
+      renderMenuGrid(dishes);
+      initParticleCanvas();
+      drawWheel();
+      VanillaTilt.init(document.querySelectorAll("[data-tilt]"));
+    };
+
+    // Render Menu Grid
+    function renderMenuGrid(items) {
+      const grid = document.getElementById('foodGrid');
+      grid.innerHTML = '';
+
+      items.forEach(dish => {
+        const card = document.createElement('div');
+        card.className = "glass-card glass-card-hover rounded-3xl overflow-hidden group border border-slate-800 shine-effect cursor-pointer";
+        card.setAttribute("data-tilt", "");
+        card.innerHTML = `
+          <div class="relative h-60 overflow-hidden">
+            <img src="${dish.image}" alt="${dish.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+            <span class="absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 shadow">
+              ${dish.badge}
+            </span>
+            <div class="absolute top-4 right-4 px-2.5 py-1 rounded-full text-xs font-extrabold bg-dark-950/80 text-amber-400 backdrop-blur-md">
+              ★ ${dish.rating}
+            </div>
+          </div>
+          <div class="p-6 space-y-4">
+            <h3 class="font-black text-lg group-hover:text-amber-400 transition-colors">${dish.title}</h3>
+            <div class="flex items-center justify-between pt-2">
+              <span class="text-2xl font-black text-white">$${dish.price.toFixed(2)}</span>
+              <button onclick="addToCart(${dish.id})" onmouseenter="playChime(600)" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-coral-500 text-slate-950 font-black text-xs shadow-lg hover:scale-110 transition-all flex items-center gap-1">
+                <i data-lucide="plus" class="w-4 h-4 stroke-[3]"></i> ADD
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      lucide.createIcons();
+      VanillaTilt.init(document.querySelectorAll("[data-tilt]"));
+    }
+
+    // Category Filtering
+    function filterCategory(cat) {
+      document.querySelectorAll('.cat-filter').forEach(b => {
+        b.classList.remove('active', 'bg-amber-500', 'text-slate-950');
+        b.classList.add('glass-card', 'text-slate-300');
+      });
+      event.currentTarget.classList.add('active', 'bg-amber-500', 'text-slate-950');
+      event.currentTarget.classList.remove('glass-card', 'text-slate-300');
+
+      if (cat === 'all') {
+        renderMenuGrid(dishes);
+      } else {
+        renderMenuGrid(dishes.filter(d => d.category === cat));
+      }
+    }
+
+    // Search Filtering
+    function filterBySearch() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      renderMenuGrid(dishes.filter(d => d.title.toLowerCase().includes(q)));
+    }
+
+    function filterByMobileSearch() {
+      const q = document.getElementById('mobileSearchInput').value.toLowerCase();
+      renderMenuGrid(dishes.filter(d => d.title.toLowerCase().includes(q)));
+    }
+
+    // Particle Canvas Animation
+    function initParticleCanvas() {
+      const canvas = document.getElementById('particleCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const emojis = ['🍔', '🍕', '🍣', '🍰', '🍹', '✨'];
+
+      for (let i = 0; i < 25; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 20 + 14,
+          emoji: emojis[Math.floor(Math.random() * emojis.length)],
+          speedY: Math.random() * 0.5 + 0.2
+        });
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          ctx.font = `${p.size}px serif`;
+          ctx.fillText(p.emoji, p.x, p.y);
+          p.y -= p.speedY;
+          if (p.y < -30) {
+            p.y = canvas.height + 30;
+            p.x = Math.random() * canvas.width;
+          }
+        });
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    // Builder Widget Logic
+    function setBuilderBase(type) {
+      document.querySelectorAll('.builder-base-btn').forEach(b => {
+        b.classList.remove('active', 'border-amber-500', 'text-amber-400');
+      });
+      event.currentTarget.classList.add('active', 'border-amber-500', 'text-amber-400');
+
+      if (type === 'bowl') {
+        builderPrice = 14.00;
+        builderName = "Custom Grain Bowl";
+        builderImg = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
+        document.getElementById('builderBaseTag').innerText = "ORGANIC GRAIN BOWL";
+      } else if (type === 'pizza') {
+        builderPrice = 16.00;
+        builderName = "Custom Artisan Pizza";
+        builderImg = "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80";
+        document.getElementById('builderBaseTag').innerText = "WOODFIRED PIZZA";
+      } else {
+        builderPrice = 15.00;
+        builderName = "Custom Ramen Bowl";
+        builderImg = "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80";
+        document.getElementById('builderBaseTag').innerText = "AUTHENTIC RAMEN";
+      }
+
+      document.getElementById('builderImg').src = builderImg;
+      document.getElementById('builderName').innerText = builderName;
+      updateBuilderPrice();
+    }
+
+    function updateBuilderPrice() {
+      let total = builderPrice;
+      document.querySelectorAll('.builder-topping:checked').forEach(cb => {
+        total += parseFloat(cb.value);
+      });
+      document.getElementById('builderPrice').innerText = `$${total.toFixed(2)}`;
+    }
+
+    function addCustomBuilderToCart() {
+      let total = builderPrice;
+      const toppings = [];
+      document.querySelectorAll('.builder-topping:checked').forEach(cb => {
+        total += parseFloat(cb.value);
+        toppings.push(cb.getAttribute('data-name'));
+      });
+
+      const title = toppings.length > 0 ? `${builderName} (${toppings.join(', ')})` : builderName;
+
+      cart.push({
+        id: Date.now(),
+        title: title,
+        price: total,
+        image: builderImg,
+        qty: 1
+      });
+
+      updateCartUI();
+      showToast("Custom creation added to bag!");
+      toggleCartDrawer(true);
+    }
+
+    // Wheel Canvas Drawer
+    const wheelItems = ["Wagyu Burger", "Woodfired Pizza", "Salmon Roll", "Chocolate Lava", "Dragonfruit Mojito", "Seafood Ramen"];
+    const wheelColors = ["#f59e0b", "#ff6b4a", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899"];
+
+    function drawWheel() {
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
+      const numSlices = wheelItems.length;
+      const sliceAngle = (2 * Math.PI) / numSlices;
+
+      for (let i = 0; i < numSlices; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = wheelColors[i];
+        ctx.moveTo(150, 150);
+        ctx.arc(150, 150, 150, i * sliceAngle, (i + 1) * sliceAngle);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(150, 150);
+        ctx.rotate(i * sliceAngle + sliceAngle / 2);
+        ctx.fillStyle = "#070a0f";
+        ctx.font = "bold 11px sans-serif";
+        ctx.fillText(wheelItems[i], 45, 4);
+        ctx.restore();
+      }
+    }
+
+    let wheelDeg = 0;
+    function spinWheel() {
+      playChime(800);
+      const randSlice = Math.floor(Math.random() * wheelItems.length);
+      wheelDeg += 1440 + (randSlice * 60);
+      const canvas = document.getElementById('wheelCanvas');
+      canvas.style.transform = `rotate(${wheelDeg}deg)`;
+
+      setTimeout(() => {
+        const dishName = wheelItems[randSlice];
+        document.getElementById('wheelResult').innerText = `🎉 Surprise Pick: ${dishName}!`;
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+      }, 4000);
+    }
+
+    // Cart Management
+    function addToCart(id) {
+      const item = dishes.find(d => d.id === id);
+      const exist = cart.find(c => c.id === id);
+      if (exist) {
+        exist.qty += 1;
+      } else {
+        cart.push({ ...item, qty: 1 });
+      }
+      updateCartUI();
+      showToast(`${item.title} added to bag!`);
+    }
+
+    function addHeroDishToCart() {
+      addToCart(1);
+    }
+
+    function updateCartUI() {
+      const badge = document.getElementById('cartBadge');
+      const list = document.getElementById('cartItemsList');
+      const subtotalEl = document.getElementById('cartSubtotal');
+      const totalEl = document.getElementById('cartTotal');
+
+      const totalItems = cart.reduce((acc, i) => acc + i.qty, 0);
+      badge.innerText = totalItems;
+
+      if (cart.length === 0) {
+        list.innerHTML = `<div class="text-center py-16 text-slate-500 font-bold text-xs uppercase tracking-wider">Your culinary bag is empty</div>`;
+        subtotalEl.innerText = '$0.00';
+        totalEl.innerText = '$2.99';
+        return;
+      }
+
+      list.innerHTML = '';
+      let subtotal = 0;
+
+      cart.forEach((item, idx) => {
+        subtotal += item.price * item.qty;
+        const el = document.createElement('div');
+        el.className = "flex items-center gap-3 p-3 rounded-2xl glass-card border border-slate-800";
+        el.innerHTML = `
+          <img src="${item.image}" class="w-14 h-14 rounded-xl object-cover">
+          <div class="flex-1 min-w-0">
+            <h4 class="font-extrabold text-xs truncate">${item.title}</h4>
+            <p class="text-xs font-black text-amber-400">$${item.price.toFixed(2)}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="changeQty(${idx}, -1)" class="w-6 h-6 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-xs">-</button>
+            <span class="text-xs font-black">${item.qty}</span>
+            <button onclick="changeQty(${idx}, 1)" class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs">+</button>
+          </div>
+        `;
+        list.appendChild(el);
+      });
+
+      const discount = subtotal * discountRate;
+      subtotalEl.innerText = `$${subtotal.toFixed(2)}`;
+      
+      if (discountRate > 0) {
+        document.getElementById('discountRow').classList.remove('hidden');
+        document.getElementById('cartDiscount').innerText = `-$${discount.toFixed(2)}`;
+      }
+
+      const total = subtotal - discount + 2.99;
+      totalEl.innerText = `$${total.toFixed(2)}`;
+
+      // Update Free Shipping Progress Bar
+      const target = 50;
+      const pct = Math.min(100, (subtotal / target) * 100);
+      document.getElementById('shippingBar').style.width = `${pct}%`;
+      document.getElementById('shippingPct').innerText = `${Math.round(pct)}%`;
+      if (pct >= 100) {
+        document.getElementById('shippingText').innerText = "🎉 FREE EXPRESS SHIPPING UNLOCKED!";
+      } else {
+        document.getElementById('shippingText').innerText = `Add $${(target - subtotal).toFixed(2)} for FREE Express Shipping`;
+      }
+    }
+
+    function changeQty(idx, delta) {
+      cart[idx].qty += delta;
+      if (cart[idx].qty <= 0) cart.splice(idx, 1);
+      updateCartUI();
+    }
+
+    function applyPromo() {
+      const code = document.getElementById('promoInput').value.trim().toUpperCase();
+      if (code === 'FLAVOR20') {
+        discountRate = 0.20;
+        showToast("20% Promo Discount Applied!");
+        updateCartUI();
+      } else {
+        showToast("Invalid Promo Code");
+      }
+    }
+
+    function triggerCheckout() {
+      if (cart.length === 0) return showToast("Add items to bag first!");
+      cart = [];
+      updateCartUI();
+      toggleCartDrawer(false);
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      showToast("🎉 Order Confirmed! Express Dispatch En Route!");
+    }
+
+    function toggleCartDrawer(open) {
+      const drawer = document.getElementById('cartDrawer');
+      const backdrop = document.getElementById('cartBackdrop');
+      const panel = document.getElementById('cartPanel');
+
+      if (open) {
+        drawer.classList.remove('pointer-events-none');
+        backdrop.classList.remove('opacity-0');
+        panel.classList.remove('translate-x-full');
+      } else {
+        backdrop.classList.add('opacity-0');
+        panel.classList.add('translate-x-full');
+        setTimeout(() => drawer.classList.add('pointer-events-none'), 300);
+      }
+    }
+
+    function toggleTrackerModal(open) {
+      const modal = document.getElementById('trackerModal');
+      if (open) modal.classList.remove('hidden');
+      else modal.classList.add('hidden');
+    }
+
+    function handleReservationSubmit(e) {
+      e.preventDefault();
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      showToast("VIP Reservation Confirmed!");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+    }
+
+    function toggleMobileMenu() {
+      document.getElementById('mobileMenu').classList.toggle('hidden');
+    }
+  </script>
+</body>
+</html>
